@@ -54,5 +54,30 @@ jobs:
           push: true
           tags: |
             ${{ secrets.ACR_LOGIN_SERVER }}/${{ secrets.ACR_REPOSITORY }}:${{ github.event.inputs.image_tag }}
-      
+
+      - name: Checkout deployment repository 
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.DEPLOYMENT_REPO_NAME }} 
+          token: ${{ secrets.DEPLOYMENT_REPO_PAT }} 
+          path: 'deployment-repo' 
+
+      - name: Install Kustomize 
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Update Kubernetes manifest
+        run: |
+          cd deployment-repo/k8s/shopping-mall/backend/overlays/aws
+          kustomize edit set image backend-image=${{ secrets.ECR_BACKEND_REPOSITORY }}:${{ github.event.inputs.image_tag }}
+
+      - name: Commit and push changes
+        run: |
+          cd deployment-repo
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Update backend image to tag ${{ github.event.inputs.image_tag }}" || echo "No changes to commit"
+          git push
   
