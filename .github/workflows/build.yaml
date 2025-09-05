@@ -75,6 +75,7 @@ jobs:
       - name: Update values.yaml
         run: | 
           cd deployment-repo
+          ls -al
           yq e '.backend.deployment.tag = "${{ github.event.inputs.image_tag }}"' -i values.yaml
 
       - name: Commit and push changes
