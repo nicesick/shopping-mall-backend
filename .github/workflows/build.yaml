@@ -85,4 +85,3 @@ jobs:
           git add .
           git commit -m "Update backend image to tag ${{ github.event.inputs.image_tag }}" || echo "No changes to commit"
           git push
-  
