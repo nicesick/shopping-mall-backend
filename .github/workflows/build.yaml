@@ -40,20 +40,20 @@ jobs:
           tags: |
             ${{ secrets.ECR_BACKEND_REPOSITORY }}:${{ github.event.inputs.image_tag }}
             
-      - name: Login to Azure ACR
-        uses: azure/docker-login@v1
-        with:
-          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+      # - name: Login to Azure ACR
+      #   uses: azure/docker-login@v1
+      #   with:
+      #     login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+      #     username: ${{ secrets.ACR_USERNAME }}
+      #     password: ${{ secrets.ACR_PASSWORD }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ secrets.ACR_LOGIN_SERVER }}/${{ secrets.ACR_REPOSITORY }}:${{ github.event.inputs.image_tag }}
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     push: true
+      #     tags: |
+      #       ${{ secrets.ACR_LOGIN_SERVER }}/${{ secrets.ACR_REPOSITORY }}:${{ github.event.inputs.image_tag }}
 
       - name: Checkout deployment repository 
         uses: actions/checkout@v4
@@ -62,15 +62,20 @@ jobs:
           token: ${{ secrets.DEPLOYMENT_REPO_PAT }} 
           path: 'deployment-repo' 
 
-      - name: Install Kustomize 
-        run: |
-          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
-          sudo mv kustomize /usr/local/bin/
+      # - name: Install Kustomize 
+      #   run: |
+      #     curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"  | bash
+      #     sudo mv kustomize /usr/local/bin/
 
-      - name: Update Kubernetes manifest
-        run: |
-          cd deployment-repo/k8s/shopping-mall/backend/overlays/aws
-          kustomize edit set image backend-image=${{ secrets.ECR_BACKEND_REPOSITORY }}:${{ github.event.inputs.image_tag }}
+      # - name: Update Kubernetes manifest
+      #   run: |
+      #     cd deployment-repo/k8s/shopping-mall/backend/overlays/aws
+      #     kustomize edit set image backend-image=${{ secrets.ECR_BACKEND_REPOSITORY }}:${{ github.event.inputs.image_tag }}
+
+      - name: Update values.yaml
+        run: | 
+          cd deployment-repo
+          yq e '.backend.deployment.tag = "${{ github.event.inputs.image_tag }}"' -i values.yaml
 
       - name: Commit and push changes
         run: |
